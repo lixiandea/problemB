@@ -1,0 +1,8 @@
+*.png
+.history*
+dataSet*
+.vscode*
+.tmp*
+*__pycache__*
+*.tar
+*.jpg
