@@ -1,5 +1,5 @@
 from MyDataset import MyDataset
-from uNet import UNet
+from models import UNet
 import cv2
 from tqdm import tqdm
 import torch.optim as optim
@@ -161,4 +161,4 @@ if __name__=="__main__":
     unet = UNet().to(device)
     dataset = MyDataset("dataSet/train")
     optimizer = optim.Adam(unet.parameters(), lr=1e-3)
-    train(unet, optimizer, dataset)
+    # train(unet, optimizer, dataset)
