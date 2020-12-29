@@ -161,4 +161,4 @@ if __name__=="__main__":
     unet = UNet().to(device)
     dataset = MyDataset("dataSet/train")
     optimizer = optim.Adam(unet.parameters(), lr=1e-3)
-    # train(unet, optimizer, dataset)
+    train(unet, optimizer, dataset)
