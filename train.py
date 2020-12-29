@@ -19,6 +19,7 @@ import matplotlib.pyplot as plt
 if not os.path.exists("run"):
     os.mkdir("run")
 runs = sorted(glob.glob(os.path.join( 'run', 'run_*')))
+device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
 
 run_id = int(runs[-1].split('_')[-1]) + 1 if runs else 0
 save_dir = os.path.join('run', 'run_' + '0' * (2 - len(str(run_id)))+ str(run_id))
@@ -157,7 +158,7 @@ def train(model, optimizer, dataset, save_epoch=100, test_pic="Data8.tif", test_
     print("Save final model at {} ".format(os.path.join(save_dir, 'models', "unet" + '-final'+ '.pth.tar')))
         # print("Best validation mean DSC: {:4f}".format(best_validation_dsc))
 if __name__=="__main__":
-    device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
+    
     unet = UNet().to(device)
     dataset = MyDataset("dataSet/train")
     optimizer = optim.Adam(unet.parameters(), lr=1e-3)
