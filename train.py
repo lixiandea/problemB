@@ -72,7 +72,7 @@ def train(model, optimizer, dataset, save_epoch=100, test_pic="Data8.tif", test_
     accs = []
     mIoUs = []
     FWIoU = []
-    for epoch in tqdm(range(1000)):
+    for epoch in tqdm(range(500)):
 
         epoch_train_loss = 0.0
         epoch_val_loss = 0.0
