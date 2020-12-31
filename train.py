@@ -126,7 +126,7 @@ def train(model, optimizer, dataset, save_epoch=100, test_pic="Data8.tif", test_
         plt.plot(loss_valid, color='b', label='val_loss')
         plt.legend()
         plt.savefig(save_dir +'/loss.png' ,format='png')
-        print("train_loss: ", epoch_train_loss, "val_loss: ", epoch_train_loss)
+        # print("train_loss: ", epoch_train_loss, "val_loss: ", epoch_train_loss)
                     # logger.scalar_summary("val_dsc", mean_dsc, step)
         
         if epoch % save_epoch == (save_epoch - 1):

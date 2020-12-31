@@ -4,6 +4,7 @@ import random
 import os
 import numpy as np
 from tqdm import tqdm
+import sys
 
 img_w = 256  
 img_h = 256  
@@ -96,4 +97,5 @@ if __name__=='__main__':
     os.makedirs('dataSet/visualize')
     os.makedirs('dataSet/train/src')
     os.makedirs('dataSet/train/label')
-    creat_dataset(mode='augment', image_num=8000)
+    # print(sys.argv)
+    creat_dataset(mode='augment', image_num=int(sys.argv[1]))
