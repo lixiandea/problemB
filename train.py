@@ -10,6 +10,7 @@ from torch.utils.data import random_split
 import torch
 import glob
 import os
+import sys
 import numpy as np 
 import matplotlib
 from metric import SegmentationMetric
@@ -55,8 +56,9 @@ def test(model, pic_path, label_path):
     plt.show()
 
 
-def train(model, optimizer, dataset, save_epoch=100, test_pic="Data8.tif", test_label = "Data8_reference.tif"):
-    best_validation_dsc = 0.0
+def train(model, optimizer, dataset, save_epoch=100, test_pic="Data8.tif", test_label = "Data8_reference.tif", epoch_num=200):
+    device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
+    # best_validation_dsc = 0.0
     dsc_loss = DiceLoss()
     train_size = int(0.8 * len(dataset))
     test_size = len(dataset) - train_size
@@ -73,7 +75,7 @@ def train(model, optimizer, dataset, save_epoch=100, test_pic="Data8.tif", test_
     accs = []
     mIoUs = []
     FWIoU = []
-    for epoch in tqdm(range(500)):
+    for epoch in tqdm(range(epoch_num)):
 
         epoch_train_loss = 0.0
         epoch_val_loss = 0.0
@@ -162,4 +164,4 @@ if __name__=="__main__":
     unet = UNet().to(device)
     dataset = MyDataset("dataSet/train")
     optimizer = optim.Adam(unet.parameters(), lr=1e-3)
-    train(unet, optimizer, dataset)
+    train(unet, optimizer, dataset, epoch_num=int(sys.argv[1]))

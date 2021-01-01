@@ -14,7 +14,7 @@ from tqdm import tqdm
 
 class MyDataset(Dataset):
     """Brain MRI dataset for FLAIR abnormality segmentation"""
-
+    
     in_channels = 3
     out_channels = 1
 
@@ -26,6 +26,8 @@ class MyDataset(Dataset):
     ):
         # read images
         self.pics = []
+        self.mu = [87.29496233333333,92.12323833333333,92.726152]
+        self.sigma = [5.581662158824008,5.640437366008411,6.813343995882588]
         self.masks = []
         pic_dir = os.path.join(images_dir, "src")
         label_dir = os.path.join(images_dir, "label")
@@ -39,11 +41,15 @@ class MyDataset(Dataset):
         return len(self.pics)
 
     def __getitem__(self, idx):
-        pic = cv2.imread(self.pics[idx]).transpose(2,0,1).astype(np.float32)
-        mask = cv2.imread(self.masks[idx], 2)[np.newaxis, :, :].astype(np.uint8)
+        pic = self.normalization( cv2.imread(self.pics[idx])).transpose(2,0,1).astype(np.float32)
+        mask = cv2.imread(self.masks[idx], 2)[np.newaxis, :, :].astype(np.float32)
+
         return torch.from_numpy(pic), torch.from_numpy(mask)
 
-
+    def normalization(self, img):
+        for i in range(3):
+            img[:,:,i] = (img[:,:,i] - self.mu[i])/self.sigma[i]
+        return img
 if __name__ == "__main__":
     dataset = MyDataset("dataSet/train")
     batchSize = 16
