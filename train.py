@@ -13,6 +13,7 @@ import os
 import sys
 import numpy as np 
 import matplotlib
+import torch.nn as nn
 from metric import SegmentationMetric
 matplotlib.use('Agg')
 import matplotlib.pyplot as plt
@@ -60,6 +61,7 @@ def train(model, optimizer, dataset, save_epoch=100, test_pic="Data8.tif", test_
     device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
     # best_validation_dsc = 0.0
     dsc_loss = DiceLoss()
+    # dsc_loss = nn.BCELoss()
     train_size = int(0.8 * len(dataset))
     test_size = len(dataset) - train_size
     train_dataset, val_dataset = random_split(dataset, [train_size, test_size])
