@@ -29,10 +29,16 @@ os.mkdir(save_dir)
 os.mkdir(save_dir+"/models")
 print("save_dir: ",save_dir )
 
+
+
+
 def test(model, pic_path, label_path):
     model.eval()
     data = cv2.imread(pic_path, 3)
     label = cv2.imread(label_path, 2)
+    acc = 0
+    mIoU = 0
+    FWIoU = 0
     for i in [0, 240]:
         for j in [0, 256]:
             metric = SegmentationMetric(2)
@@ -48,13 +54,13 @@ def test(model, pic_path, label_path):
             #plt.figure()
             #plt.imshow(test_label)
             metric.addBatch(res, test_label)
-            acc = metric.pixelAccuracy()
-            mIoU = metric.meanIntersectionOverUnion()
-            FWIoU = metric.Frequency_Weighted_Intersection_over_Union()
+            acc += metric.pixelAccuracy()
+            mIoU += metric.meanIntersectionOverUnion()
+            FWIoU += metric.Frequency_Weighted_Intersection_over_Union()
             # print(acc, mIoU, FWIoU)
-            return acc, mIoU, FWIoU
+    return acc, mIoU, FWIoU
 
-    plt.show()
+    
 
 
 def train(model, optimizer, dataset, save_epoch=100, test_pic="Data8.tif", test_label = "Data8_reference.tif", epoch_num=200):
