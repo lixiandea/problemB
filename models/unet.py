@@ -219,11 +219,28 @@ class SegNet(nn.Module):
 
         return x11d
 if __name__ == "__main__":
+    # 对于unet而言，是什么HW并不重要，只要是2的倍数就可以了
+    # 不可以小于8
     model = UNet()
-    data = torch.rand(8, 3, 256, 256)
+    data = torch.rand(2, 3, 256, 256)
     # res = model(data)
     # print(res.shape)
 
-    model= SegNet()
+    # model= SegNet()
+    res = model(data)
+    print(res.shape)
+    data = torch.rand(2, 3, 128, 128)
+    res = model(data)
+    print(res.shape)
+    data = torch.rand(2, 3, 64, 64)
+    res = model(data)
+    print(res.shape)
+    data = torch.rand(2, 3, 32, 32)
+    res = model(data)
+    print(res.shape)
+    data = torch.rand(2, 3, 16, 16)
+    res = model(data)
+    print(res.shape)
+    data = torch.rand(2, 3, 8, 8)
     res = model(data)
     print(res.shape)

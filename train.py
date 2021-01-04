@@ -1,5 +1,5 @@
 from MyDataset import MyDataset
-from models import UNet
+from models.unet import UNet
 import cv2
 from tqdm import tqdm
 import torch.optim as optim
