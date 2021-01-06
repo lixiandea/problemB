@@ -1,6 +1,6 @@
 *.png
 .history*
-dataSet/
+# dataSet/
 .vscode*
 .tmp*
 *__pycache__*
