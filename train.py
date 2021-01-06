@@ -1,4 +1,4 @@
-from MyDataset import MyDataset
+# from MyDataset import MyDataset
 from models.unet import UNet
 import cv2
 from tqdm import tqdm
@@ -16,25 +16,23 @@ import matplotlib
 import torch.nn as nn
 from metric import SegmentationMetric
 matplotlib.use('Agg')
+from utils import transform
+from utils.MyDataset import MyDataset
 import matplotlib.pyplot as plt
 
-if not os.path.exists("run"):
-    os.mkdir("run")
-runs = sorted(glob.glob(os.path.join( 'run', 'run_*')))
 device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
 
-run_id = int(runs[-1].split('_')[-1]) + 1 if runs else 0
-save_dir = os.path.join('run', 'run_' + '0' * (2 - len(str(run_id)))+ str(run_id))
-os.mkdir(save_dir)
-os.mkdir(save_dir+"/models")
-print("save_dir: ",save_dir )
 
-
+mean = [87.29496233333333,92.12323833333333,92.726152]
+# mean = [0.485, 0.456, 0.406]
+# mean = [item * value_scale for item in mean]
+# std = [0.229, 0.224, 0.225]
+std = [19.37874696, 20.15434957, 23.72587226]
 
 
 def test(model, pic_path, label_path):
     model.eval()
-    data = cv2.imread(pic_path, 3)
+    data = (cv2.imread(pic_path, 3) - mean )/ std
     label = cv2.imread(label_path, 2)
     acc = 0
     mIoU = 0
@@ -63,7 +61,16 @@ def test(model, pic_path, label_path):
     
 
 
-def train(model, optimizer, dataset, save_epoch=100, test_pic="Data8.tif", test_label = "Data8_reference.tif", epoch_num=200):
+def train(model, optimizer, dataset, save_epoch=100, test_pic="dataset/src/Data8.tif", test_label = "dataset/label/Data8_reference.tif", epoch_num=200):
+    if not os.path.exists("run"):
+        os.mkdir("run")
+    runs = sorted(glob.glob(os.path.join( 'run', 'run_*')))
+
+    run_id = int(runs[-1].split('_')[-1]) + 1 if runs else 0
+    save_dir = os.path.join('run', 'run_' + '0' * (2 - len(str(run_id)))+ str(run_id))
+    os.mkdir(save_dir)
+    os.mkdir(save_dir+"/models")
+    print("save_dir: ",save_dir )
     device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
     # best_validation_dsc = 0.0
     dsc_loss = DiceLoss()
@@ -71,8 +78,8 @@ def train(model, optimizer, dataset, save_epoch=100, test_pic="Data8.tif", test_
     train_size = int(0.8 * len(dataset))
     test_size = len(dataset) - train_size
     train_dataset, val_dataset = random_split(dataset, [train_size, test_size])
-    train_loader = DataLoader(train_dataset, shuffle=True, num_workers=4, batch_size=64)
-    val_loader = DataLoader(val_dataset, shuffle=False, num_workers=1, batch_size=64)
+    train_loader = DataLoader(train_dataset, shuffle=True, num_workers=1, batch_size=2)
+    val_loader = DataLoader(val_dataset, shuffle=False, num_workers=1, batch_size=2)
     print(len(train_dataset))
     print(len(val_dataset))
     loaders = {"train": train_loader, "valid": val_loader}
@@ -170,6 +177,16 @@ def train(model, optimizer, dataset, save_epoch=100, test_pic="Data8.tif", test_
 if __name__=="__main__":
     
     unet = UNet().to(device)
-    dataset = MyDataset("dataSet/train")
+    train_transform = transform.Compose([
+    # transform.RandScale([args.scale_min, args.scale_max]),
+    transform.RandRotate([0, 45], padding=mean, ignore_label=0),
+    transform.RandomGaussianBlur(),
+    transform.RandomHorizontalFlip(),
+    transform.Crop([512, 512], crop_type='rand', padding=mean, ignore_label=0),
+    transform.ToTensor(),
+    transform.Normalize(mean=mean, std=std)
+    ])
+    dataset = MyDataset("dataset", transform=train_transform)
     optimizer = optim.Adam(unet.parameters(), lr=1e-3)
-    train(unet, optimizer, dataset, epoch_num=int(sys.argv[1]))
+    # train(unet, optimizer, dataset, epoch_num=int(sys.argv[1]))
+    train(unet, optimizer, dataset, epoch_num=10)
