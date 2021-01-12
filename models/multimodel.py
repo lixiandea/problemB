@@ -3,7 +3,25 @@ import torch.nn as nn
 import torch.nn.functional as F
 from torch.nn import init
 from torchvision import models
+# from .loss import CELDice
 import torch.nn.functional as F
+class CELDice:
+    def __init__(self, dice_weight=0,num_classes=1):
+        self.nll_loss = nn.NLLLoss()
+        self.jaccard_weight = dice_weight
+        self.num_classes = num_classes
+
+    def __call__(self, outputs, targets):
+       loss = (1 - self.jaccard_weight) * self.nll_loss(outputs, targets)
+       if self.jaccard_weight:
+           eps = 1e-15
+           for cls in range(self.num_classes):
+               jaccard_target = (targets == cls).float()
+               jaccard_output = outputs[:, cls].exp()
+               intersection = (jaccard_output * jaccard_target).sum()
+               union = jaccard_output.sum() + jaccard_target.sum()
+               loss -= torch.log((2*intersection + eps) / (union + eps)) * self.jaccard_weight
+       return loss
 
 def init_weights(net, init_type='normal', gain=0.02):
     def init_func(m):
@@ -569,10 +587,12 @@ class RAUNet(nn.Module):
 if __name__=="__main__":
     # from fastai.vision.models import resnet34
     from tensorboardX import SummaryWriter
-    x = torch.randn(2, 3, 256, 256)
-    
+    x = torch.rand(2, 3, 256, 256)
+    y = torch.zeros(2,1,256,256).float()
+    loss = nn.BCELoss()
     
     model = RAUNet()
-    model(x)
+    y_pre = model(x)
+    print(y_pre.shape, loss(torch.sigmoid(y_pre), torch.sigmoid(y)))
     
     

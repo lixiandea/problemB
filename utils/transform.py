@@ -36,8 +36,8 @@ class ToTensor(object):
         if not isinstance(image, torch.FloatTensor):
             image = image.float()
         label = torch.from_numpy(label).unsqueeze(0)
-        if not isinstance(label, torch.LongTensor):
-            label = label.long()
+        if not isinstance(label, torch.FloatTensor):
+            label = label.float()
         return image, label
 
 

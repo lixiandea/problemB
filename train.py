@@ -5,7 +5,7 @@ from tqdm import tqdm
 import torch.optim as optim
 from torch.utils.data import DataLoader
 # from logger import Logger
-from loss import DiceLoss
+from loss import DiceLoss,CELDice
 from torch.utils.data import random_split
 import torch
 import glob
@@ -71,6 +71,7 @@ def train(model, optimizer, dataset, save_epoch=100,  epoch_num=200):
     # best_validation_dsc = 0.0
     dsc_loss = DiceLoss()
     # dsc_loss = nn.BCELoss()
+    # dsc_loss = CELDice(dice_weight=0.2)
     train_size = int(0.8 * len(dataset))
     test_size = len(dataset) - train_size
     train_dataset, val_dataset = random_split(dataset, [train_size, test_size])
@@ -103,12 +104,12 @@ def train(model, optimizer, dataset, save_epoch=100,  epoch_num=200):
                     step += 1
 
                 x, y_true = data
-                x, y_true = x.to(device), y_true.to(device)
-
+                x, y_true = x.to(device), y_true.long().to(device)
+                # y_true = y_true.squeeze(1)
                 optimizer.zero_grad()
 
                 with torch.set_grad_enabled(phase == "train"):
-                    y_pred = model(x)
+                    y_pred = torch.sigmoid(model(x))
 
                     loss = dsc_loss(y_pred, y_true)
 
@@ -179,17 +180,18 @@ if __name__=="__main__":
     print("save_dir: ",save_dir )
 
  # R2U_Net, AttU_Net,R2AttU_Net,RAUNet
-    if sys.argv[1] == 'unet':
-        model = UNet().to(device)
-    if sys.argv[1] == 'R2U_Net':
-        model = R2U_Net().to(device)
-    if sys.argv[1] == 'AttU_Net':
-        model = AttU_Net().to(device)
-    if sys.argv[1] == 'R2AttU_Net':
-        model = R2AttU_Net().to(device)
-    if sys.argv[1] == 'RAUNet':
-        model = RAUNet().to(device)
+    #if sys.argv[1] == 'unet':
+    #    model = UNet().to(device)
+    #if sys.argv[1] == 'R2U_Net':
+    #    model = R2U_Net().to(device)
+    #if sys.argv[1] == 'AttU_Net':
+    #    model = AttU_Net().to(device)
+    #if sys.argv[1] == 'R2AttU_Net':
+    #    model = R2AttU_Net().to(device)
+    #if sys.argv[1] == 'RAUNet':
+    #     model = RAUNet().to(device)
     
+    model = R2U_Net().to(device)
 
 
 
@@ -207,7 +209,8 @@ if __name__=="__main__":
     # train(unet, optimizer, dataset, epoch_num=int(sys.argv[1]))
     for i in range(10):
         optimizer = optim.Adam(model.parameters(), lr=1e-3)
-        train(model, optimizer, dataset, epoch_num=int(sys.argv[2]))
+        # train(model, optimizer, dataset, epoch_num=int(sys.argv[2]))
+        # train(model, optimizer, dataset, epoch_num=10)
 
 
 

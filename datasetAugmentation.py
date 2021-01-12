@@ -6,6 +6,7 @@ import numpy as np
 from tqdm import tqdm
 import sys
 import matplotlib.pyplot as plt
+import PIL.image as image
 
 img_w = 256  
 img_h = 256  
@@ -56,8 +57,8 @@ def data_augment(xb,yb):
     # if np.random.random() < 0.25:
     #     xb = random_gamma_transform(xb,1.0)
     #     
-    # if np.random.random() < 0.25:
-    #     xb = blur(xb)
+    if np.random.random() < 0.25:
+        xb = blur(xb)
     # 
     # if np.random.random() < 0.2:
     #     xb = add_noise(xb)
