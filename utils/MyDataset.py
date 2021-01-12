@@ -1,3 +1,4 @@
+
 import os
 import random
 import utils.transform as transform
@@ -36,10 +37,10 @@ class MyDataset(Dataset):
         pic_dir = os.path.join(images_dir, "src")
         label_dir = os.path.join(images_dir, "label")
         print("------{} pics------".format(len(os.listdir(pic_dir))))
-        for i in tqdm(range(len(os.listdir(pic_dir)))):
+        for i in tqdm(os.listdir(pic_dir)):
         # for i in tqdm(range(10)):
-            self.pics.append( np.float32(cv2.imread( os.path.join(pic_dir, "Data" + str(i + 1) + '.tif'), 3 )))
-            self.masks.append(cv2.imread( os.path.join(label_dir, "Data" + str(i + 1) +"_reference"+ '.tif'), 2).astype(float))
+            self.pics.append( np.float32(cv2.imread( os.path.join(pic_dir, i), 3 )))
+            self.masks.append(cv2.imread( os.path.join(label_dir, i), 2).astype(float))
         
 
     def __len__(self):
@@ -69,25 +70,25 @@ def channel_hist(image):
 
 
 if __name__ == "__main__":
-    # value_scale = 255
-    mean = [87.29496233333333,92.12323833333333,92.726152]
+    value_scale = 255
+    mean = [74.8559803, 79.1187336, 80.7307415]
     # mean = [0.485, 0.456, 0.406]
     # mean = [item * value_scale for item in mean]
     # std = [0.229, 0.224, 0.225]
-    std = [19.37874696, 20.15434957, 23.72587226]
+    std = [19.19655189, 19.56021428, 24.39020428]
     # std = [item * value_scale for item in std]
 
     train_transform = transform.Compose([
-        # transform.RandScale([args.scale_min, args.scale_max]),
+        transform.Resize((512,512)),
+        # transform.RandScale([0.5, 2]),
         transform.RandRotate([0, 45], padding=mean, ignore_label=0),
         transform.RandomGaussianBlur(),
         transform.RandomHorizontalFlip(),
-        transform.Crop([512, 512], crop_type='rand', padding=mean, ignore_label=0),
-        transform.Normalize(mean=mean, std=std),
-        transform.ToTensor()
-        
+        transform.Crop([256, 256], crop_type='rand', padding=mean, ignore_label=0),
+        transform.ToTensor(),
+        transform.Normalize(mean=mean, std=std)
         ])
-    dataset = MyDataset("dataset", transform=train_transform)
+    dataset = MyDataset("dataset/train", transform=train_transform)
     batchSize = 16
     validation_split = 2
     shuffle_dataset = True
@@ -102,7 +103,7 @@ if __name__ == "__main__":
     for pic, mask in tqdm(train_loader):
         print(pic.shape, mask.shape)
         pic = pic[0].numpy().transpose((1,2,0))
-        channel_hist(pic)
-        plot(pic, mask[0].numpy())
+        # channel_hist(pic)
+        plot(pic, mask[0,0].numpy())
         print(np.max(pic),np.mean(pic), np.min(pic))
 

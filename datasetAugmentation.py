@@ -5,11 +5,12 @@ import os
 import numpy as np
 from tqdm import tqdm
 import sys
+import matplotlib.pyplot as plt
 
 img_w = 256  
 img_h = 256  
 # 1-7 for train and 8 for test
-image_sets = ["Data" + str(i) +".tif" for i in range(1,8)]
+image_sets = ["Data" + str(i) +".tif" for i in range(1,9)]
 
 def gamma_transform(img, gamma):
     gamma_table = [np.power(x / 255.0, gamma) * 255.0 for x in range(256)]
@@ -69,8 +70,8 @@ def creat_dataset(image_num = 100000, mode = 'original'):
     g_count = 0
     for i in tqdm(range(len(image_sets))):
         count = 0
-        src_img = cv2.imread( image_sets[i], 3).astype(np.uint8)  # 3 channels
-        label_img = cv2.imread(image_sets[i].split('.')[0] + "_reference.tif", 2)  # single channel
+        src_img = image = cv2.normalize(cv2.imread(os.path.join('oridata', 'src',image_sets[i]) , 3), None, 0, 255, norm_type=cv2.NORM_MINMAX, dtype=cv2.CV_8UC3).astype(np.uint8)  # 3 channels
+        label_img = cv2.imread(os.path.join('oridata', 'label', image_sets[i].split('.')[0] + "_reference.tif"), 2)  # single channel
         X_height,X_width,_ = src_img.shape
         while count < image_each:
             random_width = random.randint(0, X_width - img_w - 1)
@@ -80,12 +81,19 @@ def creat_dataset(image_num = 100000, mode = 'original'):
             if mode == 'augment':
                 src_roi,label_roi = data_augment(src_roi,label_roi)
             
-            visualize = np.zeros((256,256)).astype(np.uint8)
-            visualize = label_roi *255
             
-            cv2.imwrite(('dataSet/visualize/%d.png' % g_count),visualize)
-            cv2.imwrite(('dataSet/train/src/%d.png' % g_count),src_roi)
-            cv2.imwrite(('dataSet/train/label/%d.png' % g_count),label_roi)
+            # visualize = label_roi.copy() *255
+            plt.cla()
+            plt.subplot(121)
+            plt.imshow(src_roi)
+            plt.subplot(122)
+            plt.imshow(label_roi)
+            #plt.subplot(133)
+            #plt.imshow(visualize)
+            plt.savefig(('dataset/visualize/%d.png' % g_count))
+            # cv2.imwrite(('dataset/visualize/%d.png' % g_count),visualize)
+            cv2.imwrite(('dataset/train/src/%d.png' % g_count),src_roi)
+            cv2.imwrite(('dataset/train/label/%d.png' % g_count),label_roi)
             count += 1 
             g_count += 1
 
@@ -94,8 +102,10 @@ def creat_dataset(image_num = 100000, mode = 'original'):
     
 
 if __name__=='__main__':  
-    os.makedirs('dataSet/visualize')
-    os.makedirs('dataSet/train/src')
-    os.makedirs('dataSet/train/label')
+    if not os.path.exists("dataset"):
+        os.makedirs('dataset/visualize')
+        os.makedirs('dataset/train/src')
+        os.makedirs('dataset/train/label')
     # print(sys.argv)
     creat_dataset(mode='augment', image_num=int(sys.argv[1]))
+    # creat_dataset(mode='augment', image_num=80)

@@ -19,58 +19,54 @@ matplotlib.use('Agg')
 from utils import transform
 from utils.MyDataset import MyDataset
 import matplotlib.pyplot as plt
+from models.multimodel import R2U_Net, AttU_Net,R2AttU_Net,RAUNet
 
 device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
 
 
-mean = [87.29496233333333,92.12323833333333,92.726152]
+mean = [74.8559803, 79.1187336, 80.7307415]
 # mean = [0.485, 0.456, 0.406]
 # mean = [item * value_scale for item in mean]
 # std = [0.229, 0.224, 0.225]
-std = [19.37874696, 20.15434957, 23.72587226]
+std = [19.19655189, 19.56021428, 24.39020428]
+# std = [item * value_scale for item in std]
+loss_train = []
+loss_valid = []
 
-
-def test(model, pic_path, label_path):
-    model.eval()
-    data = (cv2.imread(pic_path, 3) - mean )/ std
-    label = cv2.imread(label_path, 2)
-    acc = 0
-    mIoU = 0
-    FWIoU = 0
-    for i in [0, 240]:
-        for j in [0, 256]:
-            metric = SegmentationMetric(2)
-            test_data = data[i:i+256,j:j+256, :].transpose(2,0,1)
-            test_data = test_data[np.newaxis, :, :, :].astype(np.float32)
-            test_label = label[i:i+256,j:j+256]
-            test_data = torch.from_numpy(test_data).cuda()
-            res = model(test_data)
-            res = np.around(res.detach().cpu().numpy()[0,0,:,:]).astype(np.uint8)
-            # print(res)
-            #plt.figure()
-            #plt.imshow(res)
-            #plt.figure()
-            #plt.imshow(test_label)
-            metric.addBatch(res, test_label)
-            acc += metric.pixelAccuracy()
-            mIoU += metric.meanIntersectionOverUnion()
-            FWIoU += metric.Frequency_Weighted_Intersection_over_Union()
-            # print(acc, mIoU, FWIoU)
-    return acc, mIoU, FWIoU
+#def test(model, pic_path, label_path):
+#    model.eval()
+#    data = (cv2.imread(pic_path, 3) - mean )/ std
+#    label = cv2.imread(label_path, 2)
+#    acc = 0
+#    mIoU = 0
+#    FWIoU = 0
+#    for i in [0, 240]:
+#        for j in [0, 256]:
+#            metric = SegmentationMetric(2)
+#            test_data = data[i:i+256,j:j+256, :].transpose(2,0,1)
+#            test_data = test_data[np.newaxis, :, :, :].astype(np.float32)
+#            test_label = label[i:i+256,j:j+256]
+#            test_data = torch.from_numpy(test_data).cuda()
+#            res = model(test_data)
+#            res = np.around(res.detach().cpu().numpy()[0,0,:,:]).astype(np.uint8)
+#            # print(res)
+#            #plt.figure()
+#            #plt.imshow(res)
+#            #plt.figure()
+#            #plt.imshow(test_label)
+#            metric.addBatch(res, test_label)
+#            acc += metric.pixelAccuracy()
+#            mIoU += metric.meanIntersectionOverUnion()
+#            FWIoU += metric.Frequency_Weighted_Intersection_over_Union()
+#            # print(acc, mIoU, FWIoU)
+#    return acc, mIoU, FWIoU
 
     
 
 
-def train(model, optimizer, dataset, save_epoch=100, test_pic="dataset/src/Data8.tif", test_label = "dataset/label/Data8_reference.tif", epoch_num=200):
-    if not os.path.exists("run"):
-        os.mkdir("run")
-    runs = sorted(glob.glob(os.path.join( 'run', 'run_*')))
+# def train(model, optimizer, dataset, save_epoch=100, test_pic="oridata/src/Data8.tif", test_label = "oridata/label/Data8_reference.tif", epoch_num=200):
+def train(model, optimizer, dataset, save_epoch=100,  epoch_num=200):
 
-    run_id = int(runs[-1].split('_')[-1]) + 1 if runs else 0
-    save_dir = os.path.join('run', 'run_' + '0' * (2 - len(str(run_id)))+ str(run_id))
-    os.mkdir(save_dir)
-    os.mkdir(save_dir+"/models")
-    print("save_dir: ",save_dir )
     device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
     # best_validation_dsc = 0.0
     dsc_loss = DiceLoss()
@@ -84,12 +80,11 @@ def train(model, optimizer, dataset, save_epoch=100, test_pic="dataset/src/Data8
     print(len(val_dataset))
     loaders = {"train": train_loader, "valid": val_loader}
     
-    loss_train = []
-    loss_valid = []
+
     step = 0
-    accs = []
-    mIoUs = []
-    FWIoU = []
+    # accs = []
+    # mIoUs = []
+    # FWIoU = []
     for epoch in tqdm(range(epoch_num)):
 
         epoch_train_loss = 0.0
@@ -146,47 +141,73 @@ def train(model, optimizer, dataset, save_epoch=100, test_pic="dataset/src/Data8
         # print("train_loss: ", epoch_train_loss, "val_loss: ", epoch_train_loss)
                     # logger.scalar_summary("val_dsc", mean_dsc, step)
         
-        if epoch % save_epoch == (save_epoch - 1):
-            torch.save({
-                'epoch': epoch + 1,
-                'state_dict': model.state_dict(),
-                'opt_dict': optimizer.state_dict(),
-            }, os.path.join(save_dir, 'models', "unet" + '_epoch-' + str(epoch +1) + '.pth.tar'))
-            print("Save model at {}\n".format(os.path.join(save_dir, 'models', "unet" + '_epoch-' + str(epoch + 1) + '.pth.tar')))
+        # epoch % save_epoch == (save_epoch - 1):
+        # torch.save({
+        #     'epoch': epoch + 1,
+        #     'state_dict': model.state_dict(),
+        #     'opt_dict': optimizer.state_dict(),
+        # }, os.path.join(save_dir, 'models', "unet" + '_epoch-' + str(epoch +1) + '.# pth.tar'))
+        # print("Save model at {}\n".format(os.path.join(save_dir, 'models', "unet" + # '_epoch-' + str(epoch + 1) + '.pth.tar')))
 
-        acc, mIoU, fIou = test(model, test_pic, test_label)    
-        accs.append(acc)
-        mIoUs.append(mIoU)
-        FWIoU.append(fIou)
-        plt.cla()
-        plt.plot(accs, color='r', label='acc')
-        plt.plot(mIoUs, color='g', label='IOU')
-        plt.plot(FWIoU, color='b', label='FIOU')
-        plt.legend()
-        plt.savefig(save_dir +'/metrics.png' ,format='png')
+        #acc, mIoU, fIou = test(model, test_pic, test_label)    
+        #accs.append(acc)
+        #mIoUs.append(mIoU)
+        #FWIoU.append(fIou)
+        #plt.cla()
+        #plt.plot(accs, color='r', label='acc')
+        #plt.plot(mIoUs, color='g', label='IOU')
+        #plt.plot(FWIoU, color='b', label='FIOU')
+        #plt.legend()
+        #plt.savefig(save_dir +'/metrics.png' ,format='png')
     torch.save({
         'epoch': epoch + 1,
         'state_dict': model.state_dict(),
         'opt_dict': optimizer.state_dict(),
-        'acc': accs,
-        'mIoUs': mIoUs,
-        'FWIoU': FWIoU
-        }, os.path.join(save_dir, 'models', "unet" + '-final'+ '.pth.tar'))
+        'train_loss': loss_train,
+        'val_loss': loss_valid,
+        }, os.path.join(save_dir, 'models', sys.argv[1] + '-final'+ '.pth.tar'))
     print("Save final model at {} ".format(os.path.join(save_dir, 'models', "unet" + '-final'+ '.pth.tar')))
         # print("Best validation mean DSC: {:4f}".format(best_validation_dsc))
 if __name__=="__main__":
+    if not os.path.exists("run"):
+        os.mkdir("run")
+    runs = sorted(glob.glob(os.path.join( 'run', 'run_*')))
+    run_id = int(runs[-1].split('_')[-1]) + 1 if runs else 0
+    save_dir = os.path.join('run', 'run_' + '0' * (2 - len(str(run_id)))+ str(run_id))
+    os.mkdir(save_dir)
+    os.mkdir(save_dir+"/models")
+    print("save_dir: ",save_dir )
+
+ # R2U_Net, AttU_Net,R2AttU_Net,RAUNet
+    if sys.argv[1] == 'unet':
+        model = UNet().to(device)
+    if sys.argv[1] == 'R2U_Net':
+        model = R2U_Net().to(device)
+    if sys.argv[1] == 'AttU_Net':
+        model = AttU_Net().to(device)
+    if sys.argv[1] == 'R2AttU_Net':
+        model = R2AttU_Net().to(device)
+    if sys.argv[1] == 'RAUNet':
+        model = RAUNet().to(device)
     
-    unet = UNet().to(device)
+
+
+
+
     train_transform = transform.Compose([
     # transform.RandScale([args.scale_min, args.scale_max]),
     transform.RandRotate([0, 45], padding=mean, ignore_label=0),
     transform.RandomGaussianBlur(),
     transform.RandomHorizontalFlip(),
-    transform.Crop([512, 512], crop_type='rand', padding=mean, ignore_label=0),
+    transform.Crop([256, 256], crop_type='rand', padding=mean, ignore_label=0),
     transform.ToTensor(),
     transform.Normalize(mean=mean, std=std)
     ])
-    dataset = MyDataset("dataset", transform=train_transform)
-    optimizer = optim.Adam(unet.parameters(), lr=1e-3)
+    dataset = MyDataset("dataset/train", transform=train_transform)
     # train(unet, optimizer, dataset, epoch_num=int(sys.argv[1]))
-    train(unet, optimizer, dataset, epoch_num=10)
+    for i in range(10):
+        optimizer = optim.Adam(model.parameters(), lr=1e-3)
+        train(model, optimizer, dataset, epoch_num=int(sys.argv[2]))
+
+
+
