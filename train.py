@@ -180,18 +180,18 @@ if __name__=="__main__":
     print("save_dir: ",save_dir )
 
  # R2U_Net, AttU_Net,R2AttU_Net,RAUNet
-    #if sys.argv[1] == 'unet':
-    #    model = UNet().to(device)
-    #if sys.argv[1] == 'R2U_Net':
-    #    model = R2U_Net().to(device)
-    #if sys.argv[1] == 'AttU_Net':
-    #    model = AttU_Net().to(device)
-    #if sys.argv[1] == 'R2AttU_Net':
-    #    model = R2AttU_Net().to(device)
-    #if sys.argv[1] == 'RAUNet':
-    #     model = RAUNet().to(device)
+    if sys.argv[1] == 'unet':
+        model = UNet().to(device)
+    if sys.argv[1] == 'R2U_Net':
+        model = R2U_Net().to(device)
+    if sys.argv[1] == 'AttU_Net':
+        model = AttU_Net().to(device)
+    if sys.argv[1] == 'R2AttU_Net':
+        model = R2AttU_Net().to(device)
+    if sys.argv[1] == 'RAUNet':
+         model = RAUNet().to(device)
     
-    model = R2U_Net().to(device)
+    # model = R2U_Net().to(device)
 
 
 
@@ -209,7 +209,7 @@ if __name__=="__main__":
     # train(unet, optimizer, dataset, epoch_num=int(sys.argv[1]))
     for i in range(10):
         optimizer = optim.Adam(model.parameters(), lr=1e-3)
-        # train(model, optimizer, dataset, epoch_num=int(sys.argv[2]))
+        train(model, optimizer, dataset, epoch_num=int(sys.argv[2]))
         # train(model, optimizer, dataset, epoch_num=10)
 
 
